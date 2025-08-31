@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   FiCalendar, 
   FiClock, 
@@ -18,13 +18,14 @@ import {
   FiSave,
   FiRefreshCw
 } from 'react-icons/fi';
+import { useAuth } from '../../../hooks/useAuth';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const AIStudyPlanner = () => {
-  const [goals, setGoals] = useState([
-    { id: 1, title: 'Prepare for Mathematics Final', subject: 'Mathematics', deadline: '2023-12-15', priority: 'high', completed: false },
-    { id: 2, title: 'Complete Physics Research Paper', subject: 'Physics', deadline: '2023-11-20', priority: 'medium', completed: false },
-    { id: 3, title: 'Learn JavaScript Fundamentals', subject: 'Computer Science', deadline: '2023-11-30', priority: 'low', completed: true },
-  ]);
+  const [goals, setGoals] = useState([]);
+
+  const API_URL = "http://localhost:5000/api";
 
   const [studySessions, setStudySessions] = useState([
     { id: 1, subject: 'Mathematics', topic: 'Calculus', date: '2023-10-15', time: '14:00', duration: 2, completed: false },
@@ -42,25 +43,88 @@ const AIStudyPlanner = () => {
 
   const subjects = ['Mathematics', 'Physics', 'Computer Science', 'English', 'Chemistry', 'Biology'];
   const priorities = ['low', 'medium', 'high'];
+  const {user} = useAuth()
+    useEffect(()=>{
+      if(!user) return
+     getMyGoals()
+     getMySession()
+  },[user])
 
-  const addGoal = () => {
+  const getMyGoals = async() =>{
+    try {
+      const res = await axios.get(`${API_URL}/goals/${user.email}`)
+     setGoals(res.data.goals)
+    } catch (error) {
+      
+    }
+
+  }
+  const getMySession = async() =>{
+    try {
+      const res = await axios.get(`${API_URL}/sessions/${user.email}`)
+     console(res.data)
+    } catch (error) {
+      
+    }
+
+  }
+
+
+  const addGoal = async() => {
     if (newGoal.title && newGoal.subject && newGoal.deadline) {
-      setGoals([...goals, { ...newGoal, id: Date.now(), completed: false }]);
-      setNewGoal({ title: '', subject: '', deadline: '', priority: 'medium' });
+      try {
+        const mygoals = {
+          ...newGoal,
+          userEmail: user.email
+        }
+        const res = await axios.post(`${API_URL}/goals`, mygoals);
+        console.log(res.data)
+        
+        if(res.status == 201){
+
+          toast.success(res.data.message)
+        }
+        
+       
+        setNewGoal({ title: "", subject: "", deadline: "", priority: "medium" });
+      } catch (err) {
+        console.error("Error adding goal:", err);
+      }
     }
   };
 
-  const addStudySession = () => {
+  const addStudySession = async () => {
+  try {
     if (newSession.subject && newSession.topic && newSession.date && newSession.time) {
-      setStudySessions([...studySessions, { ...newSession, id: Date.now(), completed: false }]);
-      setNewSession({ subject: '', topic: '', date: '', time: '', duration: 1 });
+      const mySession = {
+        subject: newSession.subject,
+        topic: newSession.topic,
+        date: newSession.date,
+        startTime: newSession.time, 
+        duration: newSession.duration,
+        notes: newSession.notes || "",
+        userEmail: user.email
+      };
+
+      const res = await axios.post(`${API_URL}/sessions`, mySession);
+      console.log(res.data);
+      if (res.status === 201) {
+        toast.success(res.data.message);
+      }
+
+      setNewSession({ subject: "", topic: "", date: "", time: "", duration: 1 });
     }
-  };
+  } catch (error) {
+    console.error("Error adding session:", error.response?.data || error.message);
+    toast.error(error.response?.data?.message || "Failed to add session");
+  }
+};
 
   const toggleGoalCompletion = (id) => {
-    setGoals(goals.map(goal => 
-      goal.id === id ? { ...goal, completed: !goal.completed } : goal
-    ));
+    console.log(id)
+    // setGoals(goals.map(goal => 
+    //   goal.id === id ? { ...goal, completed: !goal.completed } : goal
+    // ));
   };
 
   const toggleSessionCompletion = (id) => {
@@ -271,10 +335,10 @@ const AIStudyPlanner = () => {
           {/* Goals List */}
           <div className="space-y-4">
             {goals.map(goal => (
-              <div key={goal.id} className="flex items-center p-3 border border-gray-200 rounded-lg">
+              <div key={goal._id} className="flex items-center p-3 border border-gray-200 rounded-lg">
                 <button 
-                  onClick={() => toggleGoalCompletion(goal.id)}
-                  className={`flex items-center justify-center w-6 h-6 rounded-full border-2 ${goal.completed ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'}`}
+                  onClick={() => toggleGoalCompletion(goal._id)}
+                  className={`flex items-center justify-center w-6 h-6 rounded-full border-2 cursor-pointer ${goal.completed ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'}`}
                 >
                   {goal.completed && <FiCheck size={12} />}
                 </button>
