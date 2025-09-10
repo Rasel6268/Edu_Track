@@ -9,12 +9,16 @@ import {
   AiOutlineSetting 
 } from 'react-icons/ai';
 import { FaUserCircle } from 'react-icons/fa';
+import { useAuth } from '../hooks/useAuth';
+import toast from 'react-hot-toast';
 
 const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const location = useLocation();
+  const {logout} = useAuth()
+
 
   const notifications = [
     { id: 1, message: 'Mathematics class starts in 15 minutes', time: '10 min ago', read: false },
@@ -31,6 +35,10 @@ const Dashboard = () => {
     { to: '/dashboard/notifications', label: 'Notifications', icon: <AiOutlineBell size={20} /> },
     { to: '/dashboard/settings', label: 'Settings', icon: <AiOutlineSetting size={20} /> },
   ];
+ const logouthandler = () => {
+  logout(); 
+  toast.success("Logged out successfully!"); // show success message
+};
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -159,9 +167,9 @@ const Dashboard = () => {
                     <p className="text-xs text-gray-500">Computer Science</p>
                   </div>
                   <div className="p-2 flex flex-col">
-                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded">👤 Profile</button>
-                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded">⚙️ Settings</button>
-                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded">🚪 Logout</button>
+                    <Link to='/dashboard/profile' className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded cursor-pointer">👤 Profile</Link>
+                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded cursor-pointer">⚙️ Settings</button>
+                    <button onClick={logouthandler} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded cursor-pointer">🚪 Logout</button>
                   </div>
                 </div>
               )}

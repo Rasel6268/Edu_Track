@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useAuth } from "../../../hooks/useAuth";
+import Loader from "../../../components/loader";
 
 const ScheduleTracker = () => {
-  const API_URL = "http://localhost:5000/schedules";
+  const API_URL = "http://localhost:3001/schedule";
+  const API = "http://localhost:3001";
   const [activeView, setActiveView] = useState("daily");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showAddModal, setShowAddModal] = useState(false);
@@ -31,7 +34,6 @@ const ScheduleTracker = () => {
   ]);
 
   const [newClass, setNewClass] = useState({
-    title: "",
     subject: "",
     startTime: "09:00",
     endTime: "10:00",
@@ -40,10 +42,12 @@ const ScheduleTracker = () => {
     color: "blue",
     notification: true,
     notificationTime: 15,
+    date: "",
   });
 
   const [scheduleData, setScheduleData] = useState({});
   const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
 
   // Complete days array
   const daysOfWeek = [
@@ -67,9 +71,11 @@ const ScheduleTracker = () => {
   const shortDayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   const fetchSchedules = async () => {
+    if (!user?.email) return;
     try {
       setIsLoading(true);
-      const res = await axios.get(API_URL);
+      const res = await axios.get(`${API_URL}/${user.email}`);
+      console.log(res);
 
       const grouped = {};
       daysOfWeek.forEach((day) => {
@@ -115,23 +121,25 @@ const ScheduleTracker = () => {
   };
 
   const handleAddClass = async () => {
-    if (!newClass.title || !newClass.subject) {
+    if (!newClass.subject) {
       toast.error("Please fill in all required fields");
       return;
     }
 
     try {
       const newClassData = {
-        title: newClass.title,
         subject: newClass.subject,
         startTime: newClass.startTime,
         endTime: newClass.endTime,
         room: newClass.room,
         color: newClass.color,
         day: newClass.day,
+        createdBy: user.email,
+        date: newClass.date,
       };
+      console.log(newClassData)
 
-      await axios.post(API_URL, newClassData);
+      await axios.post(`${API_URL}/add`, newClassData);
       toast.success("Class added successfully!");
 
       // Refresh the schedule data
@@ -139,12 +147,13 @@ const ScheduleTracker = () => {
 
       setShowAddModal(false);
       setNewClass({
-        title: "",
+       
         subject: "",
         startTime: "09:00",
         endTime: "10:00",
         day: "monday",
         room: "",
+        date: "",
         color: "blue",
         notification: true,
         notificationTime: 15,
@@ -153,7 +162,7 @@ const ScheduleTracker = () => {
       if (newClass.notification) {
         const newNotification = {
           id: Date.now(),
-          message: `Added new class: ${newClass.title} on ${newClass.day} at ${newClass.startTime}`,
+          message: `Added new class: ${newClass.subject} on ${newClass.day} at ${newClass.startTime}`,
           time: "Just now",
           read: false,
         };
@@ -182,7 +191,7 @@ const ScheduleTracker = () => {
         setScheduleData(updatedSchedule);
       }
 
-      const classTitle = updatedSchedule[day][classIndex].title;
+      const classTitle = updatedSchedule[day][classIndex].subject;
       const newNotification = {
         id: Date.now(),
         message: `Marked attendance for ${classTitle} as ${status}`,
@@ -262,6 +271,8 @@ const ScheduleTracker = () => {
         }
       });
     });
+    console.log(marked)
+    
 
     const attendanceRate =
       marked > 0 ? Math.round((completed / marked) * 100) : 0;
@@ -276,14 +287,7 @@ const ScheduleTracker = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading schedule data...</p>
-        </div>
-      </div>
-    );
+    return <Loader></Loader>
   }
 
   const weeklyStats = getWeeklyStats();
@@ -421,7 +425,7 @@ const ScheduleTracker = () => {
                               }}
                             >
                               <div className="font-medium">
-                                {classItem.title}
+                                {classItem.subject}
                               </div>
                               <div className="text-xs">
                                 {classItem.room} • {classItem.startTime} -{" "}
@@ -499,7 +503,7 @@ const ScheduleTracker = () => {
                                   } text-xs`}
                                 >
                                   <div className="font-medium">
-                                    {classItem.title}
+                                    {classItem.subject}
                                   </div>
                                   <div className="text-xs opacity-70">
                                     {classItem.room}
@@ -589,20 +593,6 @@ const ScheduleTracker = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Class Title *
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={newClass.title}
-                    onChange={(e) =>
-                      setNewClass({ ...newClass, title: e.target.value })
-                    }
-                    placeholder="e.g., Advanced Calculus"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Subject *
                   </label>
                   <input
@@ -650,9 +640,37 @@ const ScheduleTracker = () => {
                   <select
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={newClass.day}
-                    onChange={(e) =>
-                      setNewClass({ ...newClass, day: e.target.value })
-                    }
+                    onChange={(e) => {
+                      const selectedDay = e.target.value;
+                      // Calculate the date for the selected day in the current week
+                      const today = new Date();
+                      const currentDay = today.getDay(); // 0 (Sunday) to 6 (Saturday)
+                      const targetDay = dayNames.findIndex(
+                        (d) => d.toLowerCase() === selectedDay.toLowerCase()
+                      );
+
+                      // Calculate the difference in days
+                      let diff = targetDay - currentDay;
+                      if (diff < 0) diff += 7; // If the day has passed this week, get next week
+
+                      const targetDate = new Date(today);
+                      targetDate.setDate(today.getDate() + diff);
+
+                      // Format as YYYY-MM-DD
+                      const year = targetDate.getFullYear();
+                      const month = String(targetDate.getMonth() + 1).padStart(
+                        2,
+                        "0"
+                      );
+                      const day = String(targetDate.getDate()).padStart(2, "0");
+                      const dateStr = `${year}-${month}-${day}`;
+
+                      setNewClass({
+                        ...newClass,
+                        day: selectedDay,
+                        date: dateStr,
+                      });
+                    }}
                   >
                     {dayNames.map((day, index) => (
                       <option key={index} value={daysOfWeek[index]}>
@@ -660,6 +678,18 @@ const ScheduleTracker = () => {
                       </option>
                     ))}
                   </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Date (auto-set based on day selection)
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100"
+                    value={newClass.date || ""}
+                    readOnly
+                    placeholder="Select a day above"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -747,7 +777,7 @@ const ScheduleTracker = () => {
                 <button
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                   onClick={handleAddClass}
-                  disabled={!newClass.title || !newClass.subject}
+                  disabled={!newClass.subject || !newClass.room}
                 >
                   Add Class
                 </button>

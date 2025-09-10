@@ -6,11 +6,13 @@ import Register from "../pages/auth/Register";
 import Dashboard from "../layouts/Dashboard";
 import DashboardHome from "../pages/dashboard/DashboardHome";
 import Settings from "../pages/Settings";
-import ScheduleTracker from "../pages/dashboard/ScheduleTracker";
+import ScheduleTracker from "../pages/dashboard/student/ScheduleTracker";
 import AttendancePage from "../pages/dashboard/student/AttendancePage";
 import AIStudyPlanner from "../pages/dashboard/student/AIStudyPlanner";
 import BudgetTracker from "../pages/dashboard/student/BudgetTracker";
 import GroupStudy from "../pages/dashboard/student/GroupStudy";
+import PrivateRoute from "./PrivateRoute";
+import StudentProfile from "../pages/dashboard/student/StudentProfile";
 
 export const routers = createBrowserRouter([
     {
@@ -33,11 +35,11 @@ export const routers = createBrowserRouter([
     },
     {
         path:'/dashboard',
-        element: <Dashboard></Dashboard>,
+        element: <PrivateRoute><Dashboard></Dashboard></PrivateRoute>,
         children: [
             {
                 index:true,
-                element: <DashboardHome></DashboardHome>
+                element: <PrivateRoute><DashboardHome></DashboardHome></PrivateRoute>
             },
             {
                 path:'/dashboard/setting',
@@ -45,23 +47,27 @@ export const routers = createBrowserRouter([
             },
             {
                 path:'/dashboard/schedule',
-                element: <ScheduleTracker></ScheduleTracker>
+                element: <PrivateRoute><ScheduleTracker></ScheduleTracker></PrivateRoute>
             },
             {
                 path:"/dashboard/attendance",
-                element: <AttendancePage></AttendancePage>
+                element: <PrivateRoute><AttendancePage></AttendancePage></PrivateRoute>
             },
             {
                 path:"/dashboard/ai-planner",
-                element: <AIStudyPlanner></AIStudyPlanner>
+                element: <PrivateRoute><AIStudyPlanner></AIStudyPlanner></PrivateRoute>
             },
             {
                 path:'/dashboard/budgets',
-                element: <BudgetTracker></BudgetTracker>
+                element: <PrivateRoute><BudgetTracker></BudgetTracker></PrivateRoute>
             },
             {
                 path:'/dashboard/group',
                 element: <GroupStudy></GroupStudy>
+            },
+            {
+                path:'/dashboard/profile',
+                element: <StudentProfile></StudentProfile>
             }
         ]
     }

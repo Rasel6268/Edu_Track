@@ -24,12 +24,13 @@ import {
 import { useAuth } from "../../../hooks/useAuth";
 import toast from "react-hot-toast";
 import axios from "axios";
+import Loader from "../../../components/loader";
 
 const BudgetTracker = () => {
-  const API_URL = "http://localhost:5000/api";
+  const API_URL = "http://localhost:3001";
   const [activeTab, setActiveTab] = useState("dashboard");
   const [transactions, setTransactions] = useState([]);
-  const [budgetLimits, setBudgetLimits] = useState({});
+  const [budgets, setBudgets] = useState([]); 
   const [isLoading, setIsLoading] = useState(true);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [newTransaction, setNewTransaction] = useState({
@@ -42,6 +43,7 @@ const BudgetTracker = () => {
   const [newBudget, setNewBudget] = useState({
     category: "",
     limit: "",
+    period: "monthly"
   });
 
   const auth = useAuth();
@@ -65,27 +67,23 @@ const BudgetTracker = () => {
     "Miscellaneous",
   ];
 
-  // Fetch data on component mount
+
   const fetchData = async () => {
     if (!user) return;
     try {
       setIsLoading(true);
 
+      
       const transactionsRes = await axios.get(
         `${API_URL}/transactions/${user.uid}`
       );
-      console.log(transactionsRes);
-      const budgetsRes = await axios.get(`${API_URL}/budgets/${user.uid}`);
-      console.log(budgetsRes)
+      
+     
+      const budgetsRes = await axios.get(`${API_URL}/budget/${user.uid}`);
 
       setTransactions(transactionsRes.data.transactions || []);
+      setBudgets(budgetsRes.data || []);
 
-      // Convert budgets to object
-      const limits = {};
-      budgetsRes.data.forEach((b) => {
-        limits[b.category] = b.limit;
-      });
-      setBudgetLimits(limits);
     } catch (error) {
       console.error("Error fetching data:", error);
       toast.error("Failed to load data");
@@ -98,7 +96,7 @@ const BudgetTracker = () => {
     fetchData();
   }, [user]);
 
-  // Calculate totals
+ 
   const totalIncome = transactions
     .filter((t) => t.type === "income")
     .reduce((sum, transaction) => sum + transaction.amount, 0);
@@ -109,7 +107,7 @@ const BudgetTracker = () => {
 
   const balance = totalIncome - totalExpenses;
 
-  // Calculate expenses by category
+
   const expensesByCategory = transactions
     .filter((t) => t.type === "expense")
     .reduce((acc, transaction) => {
@@ -120,7 +118,13 @@ const BudgetTracker = () => {
       return acc;
     }, {});
 
-  // Add new transaction
+  
+  const budgetLimits = budgets.reduce((acc, budget) => {
+    acc[budget.category] = budget.limit;
+    return acc;
+  }, {});
+
+
   const handleAddTransaction = async (e) => {
     e.preventDefault();
     if (
@@ -131,7 +135,6 @@ const BudgetTracker = () => {
       toast.error("Please fill in all required fields");
       return;
     }
-    console.log(newTransaction);
 
     try {
       const transactionData = {
@@ -140,6 +143,7 @@ const BudgetTracker = () => {
         userId: user.uid
       };
 
+      
       const res = await axios.post(
         `${API_URL}/transactions/${user.uid}`,
         transactionData
@@ -147,10 +151,10 @@ const BudgetTracker = () => {
 
       toast.success("Transaction added successfully!");
 
-      // Refresh transactions
-      // fetchData();
+   
+      fetchData();
 
-      // Reset form
+      
       setNewTransaction({
         type: "expense",
         category: "",
@@ -164,13 +168,14 @@ const BudgetTracker = () => {
     }
   };
 
-  // Delete transaction
+
   const deleteTransaction = async (id) => {
     if (!window.confirm("Are you sure you want to delete this transaction?")) {
       return;
     }
 
     try {
+      
       await axios.delete(`${API_URL}/transactions/${user.uid}/${id}`);
       // Refresh data
       fetchData();
@@ -178,27 +183,6 @@ const BudgetTracker = () => {
     } catch (error) {
       console.error("Error deleting transaction:", error);
       toast.error("Failed to delete transaction");
-    }
-  };
-
-  // Save budget limit
-  const saveBudgetLimit = async (category, limit) => {
-    try {
-      await axios.post(`${API_URL}/budgets/${user.uid}`, {
-        category,
-        limit: parseFloat(limit),
-        period: 'monthly'
-      });
-      
-      setBudgetLimits(prev => ({
-        ...prev,
-        [category]: parseFloat(limit)
-      }));
-      
-      return true;
-    } catch (error) {
-      console.error('Error saving budget:', error);
-      throw error;
     }
   };
 
@@ -212,9 +196,17 @@ const BudgetTracker = () => {
     }
 
     try {
-      await saveBudgetLimit(newBudget.category, newBudget.limit);
       
-      // Reset form and close modal
+      await axios.post(`${API_URL}/budget/${user.uid}`, {
+        category: newBudget.category,
+        limit: parseFloat(newBudget.limit),
+        period: newBudget.period
+      });
+      
+      
+      fetchData();
+      
+      
       setNewBudget({
         category: '',
         limit: '',
@@ -226,6 +218,26 @@ const BudgetTracker = () => {
     } catch (error) {
       console.error("Error adding budget:", error);
       toast.error("Failed to add budget limit");
+    }
+  };
+
+  // Delete budget
+  const deleteBudget = async (budgetId) => {
+    if (!window.confirm("Are you sure you want to delete this budget?")) {
+      return;
+    }
+
+    try {
+      // Corrected endpoint - matches your server route
+      await axios.delete(`${API_URL}/budget/${user.uid}/${budgetId}`);
+      
+      // Refresh budgets
+      fetchData();
+      
+      toast.success("Budget deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting budget:", error);
+      toast.error("Failed to delete budget");
     }
   };
 
@@ -258,14 +270,7 @@ const BudgetTracker = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading your budget data...</p>
-        </div>
-      </div>
-    );
+    return <Loader></Loader>
   }
 
   return (
@@ -531,22 +536,22 @@ const BudgetTracker = () => {
             <div>
               <h4 className="font-medium text-gray-800 mb-3">Budget Limits</h4>
               <div className="space-y-3">
-                {Object.entries(budgetLimits).map(([category, limit]) => {
-                  const spent = expensesByCategory[category] || 0;
+                {budgets.map((budget) => {
+                  const spent = expensesByCategory[budget.category] || 0;
                   const percentage =
-                    limit > 0 ? Math.round((spent / limit) * 100) : 0;
+                    budget.limit > 0 ? Math.round((spent / budget.limit) * 100) : 0;
 
                   return (
-                    <div key={category} className="mb-4">
+                    <div key={budget._id} className="mb-4">
                       <div className="flex justify-between items-center mb-1">
                         <div className="flex items-center">
-                          {getCategoryIcon(category)}
+                          {getCategoryIcon(budget.category)}
                           <span className="ml-2 text-sm font-medium">
-                            {category}
+                            {budget.category}
                           </span>
                         </div>
                         <span className="text-sm font-medium">
-                          ${spent.toFixed(2)} / ${limit}
+                          ${spent.toFixed(2)} / ${budget.limit}
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
@@ -561,14 +566,20 @@ const BudgetTracker = () => {
                           style={{ width: `${Math.min(percentage, 100)}%` }}
                         ></div>
                       </div>
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="flex justify-between text-xs text-gray-500 mt-1">
                         {percentage > 100 ? (
                           <span className="text-red-600">
-                            Over budget by ${(spent - limit).toFixed(2)}
+                            Over budget by ${(spent - budget.limit).toFixed(2)}
                           </span>
                         ) : (
-                          <span>${(limit - spent).toFixed(2)} remaining</span>
+                          <span>${(budget.limit - spent).toFixed(2)} remaining</span>
                         )}
+                        <button
+                          onClick={() => deleteBudget(budget._id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <FiTrash2 size={14} />
+                        </button>
                       </div>
                     </div>
                   );

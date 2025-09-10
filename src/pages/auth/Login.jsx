@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { FaGoogle } from "react-icons/fa";
 import { useAuth } from "../../hooks/useAuth";
 import toast from "react-hot-toast";
+import { Navigate, useNavigate } from "react-router";
 
 const Login = () => {
   const { login } = useAuth();
@@ -9,12 +10,14 @@ const Login = () => {
   // local state for form
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      await login(email, password); // call firebase login
+      await login(email, password);
+      navigate('/dashboard') 
       toast.success("Login successful!");
     } catch (error) {
       console.error(error);
