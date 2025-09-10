@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   FaGoogle,
@@ -14,11 +14,15 @@ import {
 
 import toast from "react-hot-toast";
 import { useAuth } from "../../hooks/useAuth";
+import { useNavigate } from "react-router";
 
 const Register = () => {
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
+  const [facultyData, setFacultyData] = useState({});
+  const [selectedFaculty, setSelectedFaculty] = useState("");
   const { Userregister } = useAuth();
+  const navigate = useNavigate()
 
   const {
     register,
@@ -27,6 +31,16 @@ const Register = () => {
     trigger,
     formState: { errors },
   } = useForm();
+
+  useEffect(() => {
+    fetch("/faculty.json")
+      .then((res) => res.json())
+      .then((data) => setFacultyData(data))
+      .catch((err) => console.error("Error loading faculty.json", err));
+  }, []);
+
+  const faculties = Object.keys(facultyData);
+  const departments = selectedFaculty ? facultyData[selectedFaculty] : [];
 
   const nextStep = async () => {
     let valid = false;
@@ -46,7 +60,7 @@ const Register = () => {
       await Userregister(email, password);
 
       // Send remaining data to your backend
-      const res = await fetch("http://localhost:5000/students/add", {
+      const res = await fetch("https://edu-track-backend-zeta.vercel.app/students/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -55,6 +69,7 @@ const Register = () => {
       const resData = await res.json();
 
       if (res.ok) {
+        navigate('/dashboard')
         toast.success("Registration Successful! Welcome aboard.");
       } else {
         toast.error(resData.message || "Backend registration failed");
@@ -108,6 +123,7 @@ const Register = () => {
 
             {/* Form */}
             <form onSubmit={handleSubmit(onSubmit)}>
+              {/* Step 1 */}
               {step === 1 && (
                 <div className="space-y-4 md:space-y-5 animate-fadeIn">
                   <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2 flex items-center">
@@ -202,11 +218,12 @@ const Register = () => {
                 </div>
               )}
 
+              {/* Step 2 */}
               {step === 2 && (
                 <div className="space-y-4 md:space-y-5 animate-fadeIn">
                   <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2 flex items-center">
-                    <FaGraduationCap className="mr-2 text-indigo-600" /> Academic
-                    Info
+                    <FaGraduationCap className="mr-2 text-indigo-600" />{" "}
+                    Academic Info
                   </h2>
 
                   {/* College */}
@@ -252,25 +269,50 @@ const Register = () => {
                     )}
                   </div>
 
-                  {/* Major */}
+                  {/* Faculty */}
                   <div>
                     <label className="block text-gray-700 mb-1 text-sm md:text-base">
-                      Major *
+                      Faculty *
                     </label>
                     <select
-                      {...register("major", { required: true })}
+                      {...register("faculty", { required: true })}
+                      onChange={(e) => setSelectedFaculty(e.target.value)}
                       className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm md:text-base"
                     >
-                      <option value="">Select Major</option>
-                      <option>Computer Science</option>
-                      <option>Business Administration</option>
-                      <option>Economics</option>
-                      <option>English</option>
-                      <option>Other</option>
+                      <option value="">Select Faculty</option>
+                      {faculties.map((faculty) => (
+                        <option key={faculty} value={faculty}>
+                          {faculty}
+                        </option>
+                      ))}
                     </select>
-                    {errors.major && (
+                    {errors.faculty && (
                       <p className="text-red-500 text-xs mt-1">
-                        Major is required
+                        Faculty is required
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Department */}
+                  <div>
+                    <label className="block text-gray-700 mb-1 text-sm md:text-base">
+                      Department *
+                    </label>
+                    <select
+                      {...register("department", { required: true })}
+                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm md:text-base"
+                      disabled={!selectedFaculty}
+                    >
+                      <option value="">Select Department</option>
+                      {departments.map((dept) => (
+                        <option key={dept} value={dept}>
+                          {dept}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.department && (
+                      <p className="text-red-500 text-xs mt-1">
+                        Department is required
                       </p>
                     )}
                   </div>
@@ -302,25 +344,26 @@ const Register = () => {
                     <button
                       type="button"
                       onClick={prevStep}
-                      className="bg-gray-200 text-gray-700 px-4 md:px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm md:text-base"
+                      className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 text-sm md:text-base"
                     >
                       ← Back
                     </button>
                     <button
                       type="button"
                       onClick={nextStep}
-                      className="bg-indigo-600 text-white px-4 md:px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm md:text-base"
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm md:text-base"
                     >
-                      Continue →
+                      Continue to Account →
                     </button>
                   </div>
                 </div>
               )}
 
+              {/* Step 3: Account */}
               {step === 3 && (
                 <div className="space-y-4 md:space-y-5 animate-fadeIn">
                   <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2 flex items-center">
-                    <FaLock className="mr-2 text-indigo-600" /> Account Details
+                    <FaEnvelope className="mr-2 text-indigo-600" /> Account Info
                   </h2>
 
                   {/* Email */}
@@ -328,15 +371,12 @@ const Register = () => {
                     <label className="block text-gray-700 mb-1 text-sm md:text-base">
                       Email *
                     </label>
-                    <div className="relative">
-                      <input
-                        type="email"
-                        {...register("email", { required: "Email required" })}
-                        placeholder="john@example.com"
-                        className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm md:text-base"
-                      />
-                      <FaEnvelope className="absolute left-3 top-3.5 text-gray-400" />
-                    </div>
+                    <input
+                      type="email"
+                      {...register("email", { required: "Email required" })}
+                      placeholder="john@example.com"
+                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm md:text-base"
+                    />
                     {errors.email && (
                       <p className="text-red-500 text-xs mt-1">
                         {errors.email.message}
@@ -354,22 +394,16 @@ const Register = () => {
                         type={showPassword ? "text" : "password"}
                         {...register("password", {
                           required: "Password required",
-                          minLength: {
-                            value: 8,
-                            message: "Min 8 characters",
-                          },
                         })}
-                        placeholder="********"
-                        className="w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm md:text-base"
+                        placeholder="Enter password"
+                        className="w-full pl-4 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm md:text-base"
                       />
-                      <FaLock className="absolute left-3 top-3.5 text-gray-400" />
-                      <button
-                        type="button"
+                      <span
+                        className="absolute right-3 top-3 cursor-pointer text-gray-400"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-3.5 text-gray-400"
                       >
                         {showPassword ? <FaEyeSlash /> : <FaEye />}
-                      </button>
+                      </span>
                     </div>
                     {errors.password && (
                       <p className="text-red-500 text-xs mt-1">
@@ -378,22 +412,21 @@ const Register = () => {
                     )}
                   </div>
 
-                  <button
-                    type="submit"
-                    className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 shadow-md transition-colors text-sm md:text-base"
-                  >
-                    🎓 Create Account
-                  </button>
-
-                  <div className="my-4 text-center text-gray-500 text-sm md:text-base">
-                    or
+                  <div className="flex justify-between">
+                    <button
+                      type="button"
+                      onClick={prevStep}
+                      className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 text-sm md:text-base"
+                    >
+                      ← Back
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm md:text-base"
+                    >
+                      Register
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    className="flex items-center justify-center w-full border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm md:text-base"
-                  >
-                    <FaGoogle className="mr-2 text-red-500" /> Sign up with Google
-                  </button>
                 </div>
               )}
             </form>
@@ -496,15 +529,25 @@ const Register = () => {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-4 text-center">
             <div className="bg-white/90 backdrop-blur-lg rounded-2xl p-4 md:p-6 shadow-xl hover:shadow-2xl transition-all duration-500">
-              <h4 className="text-2xl md:text-3xl font-bold text-indigo-600">10K+</h4>
-              <p className="text-gray-600 text-xs md:text-sm mt-2">Active Members</p>
+              <h4 className="text-2xl md:text-3xl font-bold text-indigo-600">
+                10K+
+              </h4>
+              <p className="text-gray-600 text-xs md:text-sm mt-2">
+                Active Members
+              </p>
             </div>
             <div className="bg-white/90 backdrop-blur-lg rounded-2xl p-4 md:p-6 shadow-xl hover:shadow-2xl transition-all duration-500">
-              <h4 className="text-2xl md:text-3xl font-bold text-purple-600">95%</h4>
-              <p className="text-gray-600 text-xs md:text-sm mt-2">Success Rate</p>
+              <h4 className="text-2xl md:text-3xl font-bold text-purple-600">
+                95%
+              </h4>
+              <p className="text-gray-600 text-xs md:text-sm mt-2">
+                Success Rate
+              </p>
             </div>
             <div className="bg-white/90 backdrop-blur-lg rounded-2xl p-4 md:p-6 shadow-xl hover:shadow-2xl transition-all duration-500">
-              <h4 className="text-2xl md:text-3xl font-bold text-pink-600">24/7</h4>
+              <h4 className="text-2xl md:text-3xl font-bold text-pink-600">
+                24/7
+              </h4>
               <p className="text-gray-600 text-xs md:text-sm mt-2">Support</p>
             </div>
           </div>

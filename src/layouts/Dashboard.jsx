@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router';
 import { 
   AiOutlineDashboard, 
@@ -11,13 +11,42 @@ import {
 import { FaUserCircle } from 'react-icons/fa';
 import { useAuth } from '../hooks/useAuth';
 import toast from 'react-hot-toast';
+import axios from 'axios';
+
+//https://i.ibb.co.com/KjDK5w7q/user-avatar-female-9.png
+//https://i.ibb.co.com/CK5hcvzc/casual-guy-icon-bust-800-wht.png
 
 const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const location = useLocation();
-  const {logout} = useAuth()
+  const {logout,user} = useAuth()
+  const [student,setStudent] = useState({})
+  const API_URL = "https://edu-track-backend-zeta.vercel.app"
+
+   useEffect(() => {
+    const fetchStudentData = async () => {
+      try {
+       
+        const response = await axios.get(`${API_URL}/students?email=${user.email}`);
+        
+       
+        const studentData = Array.isArray(response.data) ? response.data[0] : response.data;
+        
+        setStudent(studentData);
+        
+      } catch (err) {
+        
+    
+        console.error("Error fetching student:", err);
+      }
+    };
+
+    if (user?.email) {
+      fetchStudentData();
+    }
+  }, [user]);
 
 
   const notifications = [
@@ -45,7 +74,7 @@ const Dashboard = () => {
       {/* Sidebar */}
       <div className={`fixed inset-y-0 left-0 z-30 w-64 bg-gradient-to-b from-blue-900 to-blue-800 shadow-lg transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-5 border-b border-blue-700">
-          <h1 className="text-2xl font-bold text-white">EduTrack</h1>
+          <Link to='/' className="text-2xl font-bold text-white">EduTrack</Link>
           <p className="text-blue-200 text-sm mt-1">Student Dashboard</p>
         </div>
 
@@ -163,8 +192,8 @@ const Dashboard = () => {
               {profileOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl z-10 border border-gray-200 animate-fadeIn">
                   <div className="p-4 border-b border-gray-200">
-                    <p className="text-sm font-medium text-gray-800">John Doe</p>
-                    <p className="text-xs text-gray-500">Computer Science</p>
+                    <p className="text-sm font-medium text-gray-800">{student.fullName}</p>
+                    <p className="text-xs text-gray-500">{student.department}</p>
                   </div>
                   <div className="p-2 flex flex-col">
                     <Link to='/dashboard/profile' className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded cursor-pointer">👤 Profile</Link>

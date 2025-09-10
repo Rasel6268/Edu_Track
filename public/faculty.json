@@ -1,0 +1,54 @@
+{
+  "Faculty of Life and Earth Sciences": [
+    "Biochemistry and Molecular Biology",
+    "Microbiology",
+    "Pharmacy",
+    "Zoology",
+    "Botany",
+    "Psychology",
+    "Geography and Environment",
+    "Genetic Engineering and Biotechnology"
+  ],
+  "Faculty of Science": [
+    "Computer Science and Engineering (CSE)",
+    "Mathematics",
+    "Chemistry",
+    "Physics",
+    "Statistics"
+  ],
+  "Faculty of Business Studies": [
+    "Finance",
+    "Management Studies",
+    "Marketing",
+    "Accounting and Information Systems"
+  ],
+  "Faculty of Arts": [
+    "Bengali",
+    "English",
+    "History",
+    "Philosophy",
+    "Islamic History and Culture",
+    "Islamic Studies",
+    "Music",
+    "Theatre"
+  ],
+  "Faculty of Law": [
+    "Law",
+    "Law and Land Administration"
+  ],
+  "Faculty of Social Science": [
+    "Sociology",
+    "Anthropology",
+    "Economics",
+    "Political Science",
+    "Public Administration",
+    "Social Work",
+    "Mass Communication and Journalism",
+    "Film and Television"
+  ],
+  "Faculty of Fine Arts": [
+    "Fine Arts",
+    "Drama and Dramatics",
+    "Music"
+  ]
+}

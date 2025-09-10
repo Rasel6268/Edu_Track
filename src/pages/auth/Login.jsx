@@ -79,7 +79,7 @@ const Login = () => {
 
         <p className="mt-4 text-center text-gray-500">
           Don't have an account?{" "}
-          <a href="#register" className="text-blue-600 font-semibold">
+          <a href="/register" className="text-blue-600 font-semibold">
             Register
           </a>
         </p>

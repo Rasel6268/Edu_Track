@@ -5,7 +5,7 @@ import axios from 'axios';
 
 const BudgetOverview = () => {
   const { user } = useAuth();
-  const API_URL = "http://localhost:3001";
+  const API_URL = "https://edu-track-backend-zeta.vercel.app";
   const [budgetData, setBudgetData] = useState({
     totalIncome: 0,
     totalExpenses: 0,

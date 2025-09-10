@@ -19,7 +19,7 @@ import {
   FaTimes,
 } from "react-icons/fa";
 import { useAuth } from "../hooks/useAuth";
-import { useNavigate, useLocation } from "react-router";
+import { useNavigate, useLocation, Link } from "react-router";
 import toast from "react-hot-toast";
 
 export default function PremiumNavbar() {
@@ -192,14 +192,14 @@ export default function PremiumNavbar() {
                   </div>
 
                   <a
-                    href="#profile"
+                    
                     className="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-indigo-700 hover:text-white transition-colors"
                   >
                     <FaUser className="mr-3 text-gray-400" />
-                    <span>Profile</span>
+                    <Link to='/dashboard/profile'>Profile</Link>
                   </a>
                   <a
-                    href="#dashboard"
+                    href="/dashboard"
                     className="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-indigo-700 hover:text-white transition-colors"
                   >
                     <FaHome className="mr-3 text-gray-400" />

@@ -27,7 +27,7 @@ import axios from "axios";
 import Loader from "../../../components/loader";
 
 const BudgetTracker = () => {
-  const API_URL = "http://localhost:3001";
+  const API_URL = "https://edu-track-backend-zeta.vercel.app";
   const [activeTab, setActiveTab] = useState("dashboard");
   const [transactions, setTransactions] = useState([]);
   const [budgets, setBudgets] = useState([]); 

@@ -35,7 +35,7 @@ const AttendancePage = () => {
     end: new Date(),
   });
   const [showNotification, setShowNotification] = useState(false);
-  const API_URL = "http://localhost:3001";
+  const API_URL = "https://edu-track-backend-zeta.vercel.app";
   const { user } = useAuth();
 
   const [classSchedules, setClassSchedules] = useState([]);

@@ -18,7 +18,7 @@ import toast from 'react-hot-toast';
 import Loader from '../../../components/loader';
 
 const AIStudyPlanner = () => {
-  const API_URL = "http://localhost:3001";
+  const API_URL = "https://edu-track-backend-zeta.vercel.app";
   const [goals, setGoals] = useState([]);
   const [studySessions, setStudySessions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);

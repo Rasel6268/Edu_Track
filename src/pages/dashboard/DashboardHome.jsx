@@ -27,8 +27,8 @@ import BudgetOverview from "../../components/BudgetOverview";
 
 const DashboardHome = () => {
   const { user } = useAuth();
-  const API_URL = "http://localhost:3001/schedule";
-  const API = "http://localhost:3001";
+  const API_URL = "https://edu-track-backend-zeta.vercel.app/schedule";
+  const API = "https://edu-track-backend-zeta.vercel.app";
   const [todayClasses, setTodayClasses] = useState([]);
   const [scheduleData, setScheduleData] = useState([]);
   const [loading, setIsLoading] = useState(false);

@@ -5,8 +5,8 @@ import { useAuth } from "../../../hooks/useAuth";
 import Loader from "../../../components/loader";
 
 const ScheduleTracker = () => {
-  const API_URL = "http://localhost:3001/schedule";
-  const API = "http://localhost:3001";
+  const API_URL = "https://edu-track-backend-zeta.vercel.app/schedule";
+  const API = "https://edu-track-backend-zeta.vercel.app/";
   const [activeView, setActiveView] = useState("daily");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showAddModal, setShowAddModal] = useState(false);
